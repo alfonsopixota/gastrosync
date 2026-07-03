@@ -6,6 +6,7 @@ const cors = require('cors');
 const connectDB = require('./src/config/db');
 const setupOrderSocket = require('./src/socket/orderHandler');
 const orderRoutes = require('./src/routes/orders');
+const tableRoutes = require('./src/routes/tables');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,11 +18,12 @@ const io = new Server(server, {
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
 app.use(express.json());
 
 // Rutas
 app.use('/api/orders', orderRoutes);
+app.use('/api/tables', tableRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'GastroSync API' });

@@ -1,9 +1,10 @@
+import socket from '../socket/client';
+
 export default function KitchenView({ orders }) {
   const pendingOrders = orders.filter((o) => o.status === 'open' || o.status === 'in_progress');
 
   const updateItemStatus = (orderId, itemId, newStatus) => {
-    // En un entorno real esto iría por socket
-    console.log('Actualizar item', orderId, itemId, newStatus);
+    socket.emit('order:updateItem', { orderId, itemId, status: newStatus });
   };
 
   if (pendingOrders.length === 0) {

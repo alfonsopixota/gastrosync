@@ -5,7 +5,7 @@ import WaiterView from './pages/WaiterView';
 
 const DEMO_RESTAURANT_ID = '67a1b2c3d4e5f6a7b8c9d0e1';
 
-// Datos de demostración (funcionan sin BD)
+// Datos de demostración (requiere backend + BD levantados)
 const DEMO_MENU = [
   { _id: 'm1', name: 'Hamburguesa Clásica', price: 12.50, category: 'main' },
   { _id: 'm2', name: 'Ensalada César', price: 9.90, category: 'starter' },
@@ -29,6 +29,10 @@ export default function App() {
     socket.connect();
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
+    socket.on('reconnect', (attempt) => {
+      console.log(`Reconectado tras ${attempt} intentos`);
+      socket.emit('join:restaurant', DEMO_RESTAURANT_ID);
+    });
     socket.on('order:new', (order) => setOrders((prev) => [order, ...prev]));
     socket.on('order:updated', (order) =>
       setOrders((prev) => prev.map((o) => (o._id === order._id ? order : o)))
@@ -57,7 +61,6 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
     socket.emit('order:create', newOrder);
-    setOrders((prev) => [newOrder, ...prev]);
   };
 
   return (

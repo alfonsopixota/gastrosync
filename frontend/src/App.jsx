@@ -50,9 +50,10 @@ export default function App() {
 
   const createOrder = (tableNumber, items) => {
     const table = tables.find((t) => t.number === tableNumber);
+    if (!table) return;
     socket.emit('order:create', {
       restaurant: RESTAURANT_ID,
-      table: table ? table._id : '',
+      table: table._id,
       tableNumber,
       items: items.map((item) => ({
         menuItem: item._id,

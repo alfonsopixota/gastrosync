@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const Table = require('../models/Table');
-const { VALID_TABLE_STATUSES } = require('../validation/schemas');
+const { tableStatusSchema } = require('../validation/schemas');
 
 const router = Router();
 
@@ -15,13 +15,13 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
 
 router.put('/:tableId/status', async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!VALID_TABLE_STATUSES.includes(status)) {
-      return res.status(400).json({ error: 'Estado inválido' });
-    }
+    const parsed = tableStatusSchema.parse({
+      tableId: req.params.tableId,
+      status: req.body.status,
+    });
     const table = await Table.findByIdAndUpdate(
-      req.params.tableId,
-      { status },
+      parsed.tableId,
+      { status: parsed.status },
       { new: true }
     );
     if (!table) {
@@ -29,6 +29,9 @@ router.put('/:tableId/status', async (req, res) => {
     }
     res.json(table);
   } catch (err) {
+    if (err.name === 'ZodError') {
+      return res.status(400).json({ error: 'Datos inválidos', errors: err.issues });
+    }
     res.status(500).json({ error: err.message });
   }
 });

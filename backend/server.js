@@ -7,6 +7,7 @@ const connectDB = require('./src/config/db');
 const setupOrderSocket = require('./src/socket/orderHandler');
 const orderRoutes = require('./src/routes/orders');
 const tableRoutes = require('./src/routes/tables');
+const menuRoutes = require('./src/routes/menu');
 
 const app = express();
 const server = http.createServer(app);
@@ -24,6 +25,7 @@ app.use(express.json());
 // Rutas
 app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);
+app.use('/api/menu', menuRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'GastroSync API' });

@@ -11,15 +11,18 @@ const menuRoutes = require('./src/routes/menu');
 
 const app = express();
 const server = http.createServer(app);
+
+const CORS_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || '*',
+    origin: CORS_ORIGIN,
     methods: ['GET', 'POST'],
   },
 });
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+app.use(cors({ origin: CORS_ORIGIN }));
 app.use(express.json());
 
 // Rutas

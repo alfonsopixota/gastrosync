@@ -4,6 +4,8 @@
 
 GastroSync conecta todos los flujos de trabajo de un restaurante en tiempo real mediante WebSockets: comandas digitales, visión de cocina, gestión de mesas y menú digital.
 
+**🔗 Demo:** https://cosmic-salmiakki-4888ca.netlify.app/
+
 ## ✨ Características
 
 - **Comandas en tiempo real** — Los pedidos del camarero llegan al instante a la cocina
@@ -19,6 +21,7 @@ GastroSync conecta todos los flujos de trabajo de un restaurante en tiempo real 
 | **Frontend** | React 18 + Vite | Renderizado rápido, componentes modulares |
 | **Backend** | Node.js + Express | Alto rendimiento I/O, ideal para WebSockets |
 | **Tiempo real** | Socket.IO | Sincronización bidireccional < 300ms |
+| **Validación** | Zod | Schemas tipados para REST y WebSockets |
 | **Base de datos** | MongoDB Atlas (free tier) | Documentos flexibles para menús/pedidos |
 | **Despliegue** | Render + Netlify (free tiers) | Hosting gratuito con HTTPS incluido |
 
@@ -32,6 +35,9 @@ GastroSync conecta todos los flujos de trabajo de un restaurante en tiempo real 
 ### 1. Clonar e instalar
 
 ```bash
+git clone https://github.com/alfonsopixota/gastrosync.git
+cd gastrosync
+
 # Backend
 cd backend
 cp .env.example .env
@@ -55,7 +61,20 @@ MONGODB_URI=mongodb+srv://<usuario>:<contraseña>@cluster0.xxxxx.mongodb.net/gas
 CLIENT_URL=http://localhost:5173
 ```
 
-### 3. Abrir en el navegador
+Edita `frontend/.env` (opcional, solo si el backend no está en localhost):
+
+```env
+VITE_SOCKET_URL=http://localhost:3000
+```
+
+### 3. Sembrar datos de prueba (opcional)
+
+```bash
+cd backend
+node src/seed.js
+```
+
+### 4. Abrir en el navegador
 
 ```
 http://localhost:5173
@@ -66,27 +85,34 @@ http://localhost:5173
 ```
 Proyecto gastrosync/
 ├── backend/
-│   ├── server.js              # Servidor Express + Socket.IO
+│   ├── server.js                  # Servidor Express + Socket.IO
 │   ├── src/
-│   │   ├── config/db.js       # Conexión MongoDB
-│   │   ├── models/            # Modelos Mongoose
+│   │   ├── config/db.js           # Conexión MongoDB
+│   │   ├── models/                # Modelos Mongoose
 │   │   │   ├── Restaurant.js
 │   │   │   ├── Table.js
 │   │   │   ├── MenuItem.js
 │   │   │   └── Order.js
-│   │   ├── routes/orders.js   # API REST de pedidos
-│   │   └── socket/            # Handlers WebSocket
+│   │   ├── routes/                # API REST
+│   │   │   ├── orders.js          # Pedidos activos + historial
+│   │   │   ├── tables.js          # Gestión de mesas
+│   │   │   └── menu.js            # Catálogo de menú
+│   │   ├── socket/orderHandler.js # Handlers WebSocket
+│   │   ├── validation/schemas.js  # Schemas Zod
+│   │   └── seed.js                # Script de datos de prueba
 │   └── package.json
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.js
+│   ├── eslint.config.js
 │   └── src/
-│       ├── App.jsx            # Componente principal
-│       ├── App.css            # Estilos (incluye dark mode cocina)
+│       ├── App.jsx                # Componente principal
+│       ├── App.css                # Estilos (incluye dark mode cocina)
 │       ├── pages/
-│       │   ├── WaiterView.jsx # Vista camarero
-│       │   └── KitchenView.jsx# Vista cocina (dark mode)
-│       └── socket/client.js   # Cliente Socket.IO
+│       │   ├── WaiterView.jsx     # Vista camarero
+│       │   └── KitchenView.jsx    # Vista cocina (dark mode)
+│       └── socket/client.js       # Cliente Socket.IO
+├── contributing.md
 └── README.md
 ```
 
@@ -95,20 +121,26 @@ Proyecto gastrosync/
 ### Backend en Render
 
 1. Crea cuenta en [render.com](https://render.com) (GitHub login)
-2. Nuevo Web Service → Conectar repo
+2. Nuevo Web Service → Conectar repo `gastrosync`
 3. Configurar:
-   - **Build Command**: `cd backend && npm install`
-   - **Start Command**: `cd backend && npm start`
-   - **Plan**: Free
-4. Añadir variables de entorno en Render Dashboard
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Plan:** Free
+4. Añadir variables de entorno:
+   - `MONGODB_URI` → URI de MongoDB Atlas
+   - `PORT` → `3000`
+   - `CLIENT_URL` → URL de Netlify (ej: `https://tusitio.netlify.app`)
 
 ### Frontend en Netlify
 
 1. Crea cuenta en [netlify.com](https://netlify.com)
 2. Importar repo → Configurar:
-   - **Build Command**: `cd frontend && npm run build`
-   - **Publish Directory**: `frontend/dist`
-3. Añadir variable `VITE_SOCKET_URL` con la URL del backend en Render
+   - **Base directory:** `frontend`
+   - **Build command:** `npm run build`
+   - **Publish directory:** `frontend/dist`
+3. Añadir variable de entorno:
+   - `VITE_SOCKET_URL` → URL de Render (ej: `https://tusitio.onrender.com`)
 
 ## 📊 Modelo de datos
 
@@ -126,10 +158,16 @@ erDiagram
 - [x] Comandas en tiempo real (WebSockets)
 - [x] Vista camarero con selección de mesas
 - [x] Vista cocina con Dark Mode
+- [x] Gestión de mesas (REST + Socket)
+- [x] Validación con Zod en todos los endpoints
+- [x] Historial de pedidos paginado
+- [x] Reconexión automática del socket
+- [ ] Autenticación de usuarios
 - [ ] Módulo de administración
 - [ ] Informes y analytics
 - [ ] App móvil para clientes (menú QR)
 - [ ] Pasarela de pago integrada
+- [ ] Tests unitarios y de integración
 - [ ] Multilenguaje
 
 ## 📄 Licencia

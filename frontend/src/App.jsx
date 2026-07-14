@@ -70,7 +70,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header" role="banner">
-        <h1>GastroSync</h1>
+        <h1><span>Gastro</span>Sync</h1>
         <nav role="tablist" aria-label="Vistas">
           <button
             role="tab"

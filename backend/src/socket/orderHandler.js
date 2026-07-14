@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 const Table = require('../models/Table');
 const { createOrderSchema, updateItemSchema, tableStatusSchema } = require('../validation/schemas');
+const { sanitizeError } = require('../utils/errors');
 
 const setupOrderSocket = (io) => {
   io.on('connection', (socket) => {
@@ -52,7 +53,7 @@ const setupOrderSocket = (io) => {
         if (err instanceof z.ZodError) {
           return socket.emit('error', { message: 'Datos inválidos', errors: err.issues });
         }
-        socket.emit('error', { message: err.message });
+        socket.emit('error', { message: sanitizeError(err) });
       }
     });
 
@@ -71,7 +72,7 @@ const setupOrderSocket = (io) => {
         if (err instanceof z.ZodError) {
           return socket.emit('error', { message: 'Datos inválidos', errors: err.issues });
         }
-        socket.emit('error', { message: err.message });
+        socket.emit('error', { message: sanitizeError(err) });
       }
     });
 
@@ -90,7 +91,7 @@ const setupOrderSocket = (io) => {
         if (err instanceof z.ZodError) {
           return socket.emit('error', { message: 'Datos inválidos', errors: err.issues });
         }
-        socket.emit('error', { message: err.message });
+        socket.emit('error', { message: sanitizeError(err) });
       }
     });
 

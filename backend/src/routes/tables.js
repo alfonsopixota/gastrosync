@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const Table = require('../models/Table');
 const { tableStatusSchema } = require('../validation/schemas');
+const { sanitizeError } = require('../utils/errors');
 
 const router = Router();
 
@@ -9,7 +10,7 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
     const tables = await Table.find({ restaurant: req.params.restaurantId }).sort('number');
     res.json(tables);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -32,7 +33,7 @@ router.put('/:tableId/status', async (req, res) => {
     if (err.name === 'ZodError') {
       return res.status(400).json({ error: 'Datos inválidos', errors: err.issues });
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 

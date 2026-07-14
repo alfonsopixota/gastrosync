@@ -1,9 +1,9 @@
 const { Router } = require('express');
 const Order = require('../models/Order');
+const { sanitizeError } = require('../utils/errors');
 
 const router = Router();
 
-// Obtener pedidos activos de un restaurante
 router.get('/restaurant/:restaurantId', async (req, res) => {
   try {
     const orders = await Order.find({
@@ -12,11 +12,10 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
     }).populate('items.menuItem').sort('-createdAt');
     res.json(orders);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
-// Obtener historial de pedidos (paginado)
 router.get('/restaurant/:restaurantId/history', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -36,7 +35,7 @@ router.get('/restaurant/:restaurantId/history', async (req, res) => {
 
     res.json({ orders, page, limit, total, pages: Math.ceil(total / limit) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 

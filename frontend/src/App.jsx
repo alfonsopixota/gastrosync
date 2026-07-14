@@ -69,21 +69,35 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
+      <header className="app-header" role="banner">
         <h1>GastroSync</h1>
-        <nav>
-          <button onClick={() => setView('waiter')} className={view === 'waiter' ? 'active' : ''}>
+        <nav role="tablist" aria-label="Vistas">
+          <button
+            role="tab"
+            aria-selected={view === 'waiter'}
+            onClick={() => setView('waiter')}
+            className={view === 'waiter' ? 'active' : ''}
+          >
             Camarero
           </button>
-          <button onClick={() => setView('kitchen')} className={view === 'kitchen' ? 'active' : ''}>
+          <button
+            role="tab"
+            aria-selected={view === 'kitchen'}
+            onClick={() => setView('kitchen')}
+            className={view === 'kitchen' ? 'active' : ''}
+          >
             Cocina
           </button>
         </nav>
-        <span className={`status ${connected ? 'connected' : 'disconnected'}`}>
+        <span
+          className={`status ${connected ? 'connected' : 'disconnected'}`}
+          role="status"
+          aria-live="polite"
+        >
           {connected ? 'En vivo' : 'Desconectado'}
         </span>
       </header>
-      <main>
+      <main role="main">
         {view === 'waiter' ? (
           <WaiterView menu={menu} tables={tables} orders={orders} onCreateOrder={createOrder} />
         ) : (

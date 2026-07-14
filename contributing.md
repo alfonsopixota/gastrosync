@@ -148,7 +148,7 @@ Debe incluir:
 ### Reglas de merge
 
 - Requiere al menos **1 aprobación** antes de hacer merge
-- Los cheques deben pasar: `npm test` y `npm run build`
+- Los cheques deben pasar: `npm test` (backend) y `npm run build` (frontend)
 
 ### Estrategia de fusión
 
@@ -156,6 +156,17 @@ Debe incluir:
 |---------|--------|--------|
 | `develop` | Ramas de trabajo | **Squash & merge** |
 | `main` | `develop` | **Confirmación de fusión** |
+
+### Checks automáticos (CI)
+
+Un workflow de GitHub Actions ejecuta automáticamente:
+
+| Job | Qué verifica |
+|-----|-------------|
+| `backend` | `npm ci` + `npm test` (validación Zod, schemas, utils) |
+| `frontend` | `npm ci` + `npm run build` |
+
+Estos checks deben pasar antes de poder hacer merge de un PR.
 
 ---
 

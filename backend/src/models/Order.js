@@ -20,4 +20,6 @@ const orderSchema = new mongoose.Schema({
   notes: String,
 }, { timestamps: true });
 
+orderSchema.index({ restaurant: 1, status: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Order', orderSchema);

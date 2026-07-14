@@ -4,10 +4,10 @@ import KitchenView from './pages/KitchenView';
 import WaiterView from './pages/WaiterView';
 
 const API_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
-const RESTAURANT_ID = import.meta.env.VITE_RESTAURANT_ID;
+const RESTAURANT_ID = import.meta.env.VITE_RESTAURANT_ID || '6a4bf6ab5e1b7632418549cb';
 
-if (!RESTAURANT_ID) {
-  console.error('VITE_RESTAURANT_ID no está definido en .env');
+if (!import.meta.env.VITE_RESTAURANT_ID) {
+  console.warn('VITE_RESTAURANT_ID no definido, usando valor por defecto');
 }
 
 export default function App() {

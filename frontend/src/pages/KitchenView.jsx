@@ -1,7 +1,10 @@
 import socket from '../socket/client';
 
 export default function KitchenView({ orders }) {
-  const pendingOrders = orders.filter((o) => o.status === 'open' || o.status === 'in_progress');
+  const pendingOrders = orders.filter((o) => {
+    if (o.status !== 'open' && o.status !== 'in_progress') return false;
+    return o.items.some((item) => item.status !== 'served');
+  });
 
   const STATUS_LABELS = {
     pending: 'Pendiente',

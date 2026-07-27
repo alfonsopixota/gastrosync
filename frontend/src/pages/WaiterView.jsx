@@ -35,7 +35,10 @@ export default function WaiterView({ menu, tables, orders, onCreateOrder }) {
     setSelectedTable(null);
   };
 
-  const activeOrders = orders.filter((o) => o.status !== 'completed' && o.status !== 'cancelled');
+  const activeOrders = orders.filter((o) => {
+    if (o.status === 'completed' || o.status === 'cancelled') return false;
+    return o.items.some((item) => item.status !== 'served');
+  });
 
   const STATUS_LABELS = {
     pending: 'Pendiente',

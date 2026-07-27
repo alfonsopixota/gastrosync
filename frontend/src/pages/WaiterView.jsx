@@ -82,6 +82,11 @@ export default function WaiterView({ menu, tables, orders, onCreateOrder }) {
               onClick={() => addToCart(item)}
               aria-label={`${item.name}, ${item.price.toFixed(2)} euros, categoría ${item.category}`}
             >
+              {item.image && (
+                <div className="menu-card-image">
+                  <img src={item.image} alt={item.name} loading="lazy" />
+                </div>
+              )}
               <h3>{item.name}</h3>
               <span className="price">{item.price.toFixed(2)} €</span>
               <span className="category">{item.category}</span>

@@ -905,6 +905,34 @@ main {
   border-color: var(--primary);
 }
 
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.password-toggle:hover {
+  opacity: 1;
+}
+
 .login-toggle {
   background: none;
   border: none;

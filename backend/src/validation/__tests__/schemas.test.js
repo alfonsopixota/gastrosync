@@ -47,8 +47,20 @@ describe('Validation schemas', () => {
     it('rejects order with no items', () => {
       const result = createOrderSchema.safeParse({
         restaurant: '507f1f77bcf86cd799439011',
+        table: '507f1f77bcf86cd799439011',
         tableNumber: 1,
         items: [],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects order without table', () => {
+      const result = createOrderSchema.safeParse({
+        restaurant: '507f1f77bcf86cd799439011',
+        tableNumber: 1,
+        items: [
+          { menuItem: '507f1f77bcf86cd799439011', quantity: 1 },
+        ],
       });
       expect(result.success).toBe(false);
     });
@@ -56,6 +68,7 @@ describe('Validation schemas', () => {
     it('rejects order with zero quantity', () => {
       const result = createOrderSchema.safeParse({
         restaurant: '507f1f77bcf86cd799439011',
+        table: '507f1f77bcf86cd799439011',
         tableNumber: 1,
         items: [
           { menuItem: '507f1f77bcf86cd799439011', quantity: 0 },

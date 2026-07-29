@@ -17,7 +17,7 @@ export default function LoginView({ onLogin }) {
     setLoading(true);
     try {
       if (isRegister) {
-        const data = await apiRegister({ name, email, password, role, restaurant: import.meta.env.VITE_RESTAURANT_ID || '6a69c016061902ab10237c49' });
+        const data = await apiRegister({ name, email, password, role, restaurant: import.meta.env.VITE_RESTAURANT_ID || '6a6a35e3dfa24d3dbae1eb9c' });
         onLogin(data.user);
       } else {
         const data = await apiLogin(email, password);

@@ -1,27 +1,23 @@
-const express = require('express');
-const MenuItem = require('../models/MenuItem');
+const { Router } = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
 const validateObjectId = require('../middleware/validateObjectId');
-const { sanitizeError } = require('../utils/errors');
+const checkRestaurantAccess = require('../middleware/checkRestaurantAccess');
+const asyncHandler = require('../middleware/asyncHandler');
+const menuService = require('../services/menuService');
 
-const router = express.Router();
+const router = Router();
 
 router.use(authenticate);
 
-router.get('/restaurant/:restaurantId', validateObjectId('restaurantId'), authorize('admin', 'waiter', 'kitchen'), async (req, res) => {
-  try {
-    if (req.user.restaurant !== req.params.restaurantId && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'No tienes acceso a este restaurante' });
-    }
-
-    const items = await MenuItem.find({
-      restaurant: req.params.restaurantId,
-      available: true,
-    });
+router.get(
+  '/restaurant/:restaurantId',
+  validateObjectId('restaurantId'),
+  authorize('admin', 'waiter', 'kitchen'),
+  checkRestaurantAccess('restaurantId'),
+  asyncHandler(async (req, res) => {
+    const items = await menuService.getAvailableMenuItems(req.params.restaurantId);
     res.json(items);
-  } catch (err) {
-    res.status(500).json({ error: sanitizeError(err) });
-  }
-});
+  })
+);
 
 module.exports = router;

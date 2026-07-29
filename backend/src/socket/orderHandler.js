@@ -1,77 +1,65 @@
-const { z } = require('zod');
 const mongoose = require('mongoose');
-const Order = require('../models/Order');
-const MenuItem = require('../models/MenuItem');
-const Table = require('../models/Table');
 const { createOrderSchema, updateItemSchema, tableStatusSchema } = require('../validation/schemas');
-const { sanitizeError } = require('../utils/errors');
+const orderService = require('../services/orderService');
+const tableService = require('../services/tableService');
+
+const VALID_ROLES = {
+  createOrder: ['admin', 'waiter'],
+  updateItem: ['admin', 'kitchen'],
+  updateTable: ['admin', 'waiter'],
+};
+
+const checkRole = (user, allowedRoles) => {
+  return allowedRoles.includes(user.role);
+};
+
+const checkOwnership = (user, resourceRestaurant) => {
+  return user.restaurant === resourceRestaurant || user.role === 'admin';
+};
 
 const setupOrderSocket = (io) => {
   io.on('connection', (socket) => {
     const user = socket.user;
-    console.log(`Cliente autenticado conectado: ${socket.id} (user: ${user.id}, role: ${user.role})`);
 
     socket.on('join:restaurant', (restaurantId) => {
       if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
         return socket.emit('error', { message: 'ID de restaurante inválido' });
       }
 
-      if (user.restaurant !== restaurantId && user.role !== 'admin') {
+      if (!checkOwnership(user, restaurantId)) {
         return socket.emit('error', { message: 'No tienes acceso a este restaurante' });
       }
 
       socket.join(`restaurant:${restaurantId}`);
-      console.log(`Socket ${socket.id} unido a restaurant:${restaurantId}`);
     });
 
     socket.on('order:create', async (data) => {
       try {
         const parsed = createOrderSchema.parse(data);
 
-        if (user.restaurant !== parsed.restaurant && user.role !== 'admin') {
-          return socket.emit('error', { message: 'No puedes crear pedidos para otro restaurante' });
-        }
-
-        if (!['admin', 'waiter'].includes(user.role)) {
+        if (!checkRole(user, VALID_ROLES.createOrder)) {
           return socket.emit('error', { message: 'No tienes permiso para crear pedidos' });
         }
 
-        const menuItems = await MenuItem.find({
-          _id: { $in: parsed.items.map((i) => i.menuItem) },
-          restaurant: parsed.restaurant,
-        });
-
-        if (menuItems.length !== parsed.items.length) {
-          return socket.emit('error', { message: 'Algún item del menú no existe o no pertenece a este restaurante' });
+        if (!checkOwnership(user, parsed.restaurant)) {
+          return socket.emit('error', { message: 'No puedes crear pedidos para otro restaurante' });
         }
 
-        const menuItemMap = new Map(menuItems.map((m) => [m._id.toString(), m]));
-
-        let total = 0;
-        const items = parsed.items.map((item) => {
-          const dbItem = menuItemMap.get(item.menuItem);
-          const price = dbItem.price;
-          total += price * item.quantity;
-          return { ...item, price, name: dbItem.name };
-        });
-
-        const order = await Order.create({
+        const populated = await orderService.createOrder({
           restaurant: parsed.restaurant,
           table: parsed.table,
           tableNumber: parsed.tableNumber,
-          items,
-          total,
+          items: parsed.items,
           waiter: user.id,
           notes: parsed.notes,
         });
 
-        const populated = await Order.findById(order._id).populate('items.menuItem');
         io.to(`restaurant:${parsed.restaurant}`).emit('order:new', populated);
       } catch (err) {
-        if (err instanceof z.ZodError) {
-          return socket.emit('error', { message: 'Datos inválidos', errors: err.issues });
-        }
-        socket.emit('error', { message: sanitizeError(err) });
+        socket.emit('error', {
+          message: err.isOperational ? err.message : 'Error al crear pedido',
+          errors: err.issues || undefined,
+        });
       }
     });
 
@@ -79,26 +67,24 @@ const setupOrderSocket = (io) => {
       try {
         const parsed = updateItemSchema.parse(data);
 
-        if (!['admin', 'kitchen'].includes(user.role)) {
+        if (!checkRole(user, VALID_ROLES.updateItem)) {
           return socket.emit('error', { message: 'No tienes permiso para actualizar items' });
         }
 
-        const order = await Order.findOneAndUpdate(
-          { _id: parsed.orderId, 'items._id': parsed.itemId },
-          { $set: { 'items.$.status': parsed.status } },
-          { new: true }
-        ).populate('items.menuItem');
-        if (order) {
-          if (user.restaurant !== order.restaurant.toString() && user.role !== 'admin') {
-            return socket.emit('error', { message: 'No tienes acceso a este pedido' });
-          }
+        const order = await orderService.updateItemStatus({
+          orderId: parsed.orderId,
+          itemId: parsed.itemId,
+          status: parsed.status,
+        });
+
+        if (order && checkOwnership(user, order.restaurant.toString())) {
           io.to(`restaurant:${order.restaurant}`).emit('order:updated', order);
         }
       } catch (err) {
-        if (err instanceof z.ZodError) {
-          return socket.emit('error', { message: 'Datos inválidos', errors: err.issues });
-        }
-        socket.emit('error', { message: sanitizeError(err) });
+        socket.emit('error', {
+          message: err.isOperational ? err.message : 'Error al actualizar item',
+          errors: err.issues || undefined,
+        });
       }
     });
 
@@ -106,32 +92,24 @@ const setupOrderSocket = (io) => {
       try {
         const parsed = tableStatusSchema.parse(data);
 
-        if (!['admin', 'waiter'].includes(user.role)) {
+        if (!checkRole(user, VALID_ROLES.updateTable)) {
           return socket.emit('error', { message: 'No tienes permiso para actualizar mesas' });
         }
 
-        const table = await Table.findByIdAndUpdate(
-          parsed.tableId,
-          { status: parsed.status },
-          { new: true }
-        );
-        if (table) {
-          if (user.restaurant !== table.restaurant.toString() && user.role !== 'admin') {
-            return socket.emit('error', { message: 'No tienes acceso a esta mesa' });
-          }
+        const table = await tableService.updateTableStatus(parsed.tableId, parsed.status);
+
+        if (checkOwnership(user, table.restaurant.toString())) {
           io.to(`restaurant:${table.restaurant}`).emit('table:updated', table);
         }
       } catch (err) {
-        if (err instanceof z.ZodError) {
-          return socket.emit('error', { message: 'Datos inválidos', errors: err.issues });
-        }
-        socket.emit('error', { message: sanitizeError(err) });
+        socket.emit('error', {
+          message: err.isOperational ? err.message : 'Error al actualizar mesa',
+          errors: err.issues || undefined,
+        });
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log(`Cliente desconectado: ${socket.id}`);
-    });
+    socket.on('disconnect', () => {});
   });
 };
 

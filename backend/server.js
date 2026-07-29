@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/config/db');
 const { socketAuthenticate } = require('./src/middleware/auth');
+const AppError = require('./src/utils/AppError');
 const setupOrderSocket = require('./src/socket/orderHandler');
 const authRoutes = require('./src/routes/auth');
 const orderRoutes = require('./src/routes/orders');
@@ -62,8 +63,19 @@ app.use('/api/menu', menuRoutes);
 
 // Global error handler
 app.use((err, _req, res, _next) => {
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      error: 'Datos inválidos',
+      errors: err.issues,
+    });
+  }
+
+  if (err.isOperational) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+
   console.error('Error no manejado:', err);
-  res.status(err.statusCode || 500).json({
+  res.status(500).json({
     error: process.env.NODE_ENV === 'production' ? 'Error interno del servidor' : err.message,
   });
 });

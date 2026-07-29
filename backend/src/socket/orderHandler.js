@@ -1,4 +1,5 @@
 const { z } = require('zod');
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 const Table = require('../models/Table');
@@ -7,9 +8,18 @@ const { sanitizeError } = require('../utils/errors');
 
 const setupOrderSocket = (io) => {
   io.on('connection', (socket) => {
-    console.log(`Cliente conectado: ${socket.id}`);
+    const user = socket.user;
+    console.log(`Cliente autenticado conectado: ${socket.id} (user: ${user.id}, role: ${user.role})`);
 
     socket.on('join:restaurant', (restaurantId) => {
+      if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
+        return socket.emit('error', { message: 'ID de restaurante inválido' });
+      }
+
+      if (user.restaurant !== restaurantId && user.role !== 'admin') {
+        return socket.emit('error', { message: 'No tienes acceso a este restaurante' });
+      }
+
       socket.join(`restaurant:${restaurantId}`);
       console.log(`Socket ${socket.id} unido a restaurant:${restaurantId}`);
     });
@@ -17,6 +27,14 @@ const setupOrderSocket = (io) => {
     socket.on('order:create', async (data) => {
       try {
         const parsed = createOrderSchema.parse(data);
+
+        if (user.restaurant !== parsed.restaurant && user.role !== 'admin') {
+          return socket.emit('error', { message: 'No puedes crear pedidos para otro restaurante' });
+        }
+
+        if (!['admin', 'waiter'].includes(user.role)) {
+          return socket.emit('error', { message: 'No tienes permiso para crear pedidos' });
+        }
 
         const menuItems = await MenuItem.find({
           _id: { $in: parsed.items.map((i) => i.menuItem) },
@@ -43,7 +61,7 @@ const setupOrderSocket = (io) => {
           tableNumber: parsed.tableNumber,
           items,
           total,
-          waiter: parsed.waiter,
+          waiter: user.id,
           notes: parsed.notes,
         });
 
@@ -60,12 +78,20 @@ const setupOrderSocket = (io) => {
     socket.on('order:updateItem', async (data) => {
       try {
         const parsed = updateItemSchema.parse(data);
+
+        if (!['admin', 'kitchen'].includes(user.role)) {
+          return socket.emit('error', { message: 'No tienes permiso para actualizar items' });
+        }
+
         const order = await Order.findOneAndUpdate(
           { _id: parsed.orderId, 'items._id': parsed.itemId },
           { $set: { 'items.$.status': parsed.status } },
           { new: true }
         ).populate('items.menuItem');
         if (order) {
+          if (user.restaurant !== order.restaurant.toString() && user.role !== 'admin') {
+            return socket.emit('error', { message: 'No tienes acceso a este pedido' });
+          }
           io.to(`restaurant:${order.restaurant}`).emit('order:updated', order);
         }
       } catch (err) {
@@ -79,12 +105,20 @@ const setupOrderSocket = (io) => {
     socket.on('table:updateStatus', async (data) => {
       try {
         const parsed = tableStatusSchema.parse(data);
+
+        if (!['admin', 'waiter'].includes(user.role)) {
+          return socket.emit('error', { message: 'No tienes permiso para actualizar mesas' });
+        }
+
         const table = await Table.findByIdAndUpdate(
           parsed.tableId,
           { status: parsed.status },
           { new: true }
         );
         if (table) {
+          if (user.restaurant !== table.restaurant.toString() && user.role !== 'admin') {
+            return socket.emit('error', { message: 'No tienes acceso a esta mesa' });
+          }
           io.to(`restaurant:${table.restaurant}`).emit('table:updated', table);
         }
       } catch (err) {

@@ -822,3 +822,132 @@ main {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ===== Login ===== */
+.login-view {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.login-card h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.login-card h1 span {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-subtitle {
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.login-field {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.login-field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.375rem;
+}
+
+.login-field input,
+.login-field select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color var(--transition);
+}
+
+.login-field input:focus,
+.login-field select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.login-toggle {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+  font-family: inherit;
+}
+
+.login-toggle:hover {
+  text-decoration: underline;
+}
+
+/* ===== Header Right ===== */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.user-info {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.btn-logout {
+  padding: 0.4rem 0.875rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.btn-logout:hover {
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.3);
+  background: var(--danger-bg);
+}

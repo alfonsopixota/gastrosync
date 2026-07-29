@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Restaurant = require('./models/Restaurant');
 const Table = require('./models/Table');
 const MenuItem = require('./models/MenuItem');
+const User = require('./models/User');
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -13,6 +14,7 @@ const seed = async () => {
   await Restaurant.deleteMany({});
   await Table.deleteMany({});
   await MenuItem.deleteMany({});
+  await User.deleteMany({});
 
   const restaurant = await Restaurant.create({
     name: 'GastroSync Demo',
@@ -22,6 +24,33 @@ const seed = async () => {
   });
 
   console.log(`Restaurant creado: ${restaurant._id}`);
+
+  const admin = await User.create({
+    name: 'Admin',
+    email: 'admin@gastrosync.com',
+    password: 'admin1234',
+    role: 'admin',
+    restaurant: restaurant._id,
+  });
+  console.log(`Usuario admin creado: ${admin.email} (password: admin1234)`);
+
+  const waiter = await User.create({
+    name: 'Camarero',
+    email: 'camarero@gastrosync.com',
+    password: 'camarero1234',
+    role: 'waiter',
+    restaurant: restaurant._id,
+  });
+  console.log(`Usuario camarero creado: ${waiter.email} (password: camarero1234)`);
+
+  const kitchen = await User.create({
+    name: 'Cocinero',
+    email: 'cocina@gastrosync.com',
+    password: 'cocina1234',
+    role: 'kitchen',
+    restaurant: restaurant._id,
+  });
+  console.log(`Usuario cocina creado: ${kitchen.email} (password: cocina1234)`);
 
   const tables = [];
   for (let i = 1; i <= 6; i++) {
@@ -50,7 +79,7 @@ const seed = async () => {
   await MenuItem.insertMany(menuItems);
   console.log(`${menuItems.length} items de menú creados`);
 
-  console.log(`\n✅ Seed completado. Restaurant ID: ${restaurant._id}`);
+  console.log(`\nSeed completado. Restaurant ID: ${restaurant._id}`);
   process.exit(0);
 };
 

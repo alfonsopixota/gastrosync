@@ -7,6 +7,7 @@ export default function Header({ user, view, setView, connected, onLogout }) {
           <button
             role="tab"
             aria-selected={view === 'waiter'}
+            aria-controls="main-content"
             onClick={() => setView('waiter')}
             className={view === 'waiter' ? 'active' : ''}
           >
@@ -17,6 +18,7 @@ export default function Header({ user, view, setView, connected, onLogout }) {
           <button
             role="tab"
             aria-selected={view === 'kitchen'}
+            aria-controls="main-content"
             onClick={() => setView('kitchen')}
             className={view === 'kitchen' ? 'active' : ''}
           >
@@ -32,8 +34,12 @@ export default function Header({ user, view, setView, connected, onLogout }) {
         >
           {connected ? 'En vivo' : 'Desconectado'}
         </span>
-        <span className="user-info">{user.name} ({user.role})</span>
-        <button className="btn-logout" onClick={onLogout}>Salir</button>
+        <span className="user-info" aria-label={`Usuario: ${user.name}, rol: ${user.role}`}>
+          {user.name} ({user.role})
+        </span>
+        <button className="btn-logout" onClick={onLogout} aria-label="Cerrar sesión">
+          Salir
+        </button>
       </div>
     </header>
   );

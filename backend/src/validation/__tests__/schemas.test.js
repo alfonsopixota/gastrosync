@@ -1,3 +1,7 @@
+process.env.JWT_SECRET = 'test-secret-for-jest';
+process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
+process.env.NODE_ENV = 'test';
+
 const {
   tableStatusSchema,
   createOrderSchema,
@@ -100,16 +104,18 @@ describe('Validation schemas', () => {
 });
 
 describe('sanitizeError', () => {
-  const { sanitizeError } = require('../../utils/errors');
-
   it('returns message in development', () => {
-    process.env.NODE_ENV = 'development';
+    jest.resetModules();
+    jest.mock('../../config', () => ({ isProduction: false }));
+    const { sanitizeError } = require('../../utils/errors');
     const result = sanitizeError(new Error('test error'));
     expect(result).toBe('test error');
   });
 
   it('returns generic message in production', () => {
-    process.env.NODE_ENV = 'production';
+    jest.resetModules();
+    jest.mock('../../config', () => ({ isProduction: true }));
+    const { sanitizeError } = require('../../utils/errors');
     const result = sanitizeError(new Error('sensitive detail'));
     expect(result).toBe('Error interno del servidor');
   });

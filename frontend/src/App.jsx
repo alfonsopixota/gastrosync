@@ -5,7 +5,7 @@ import LoginView from './pages/LoginView';
 import KitchenView from './pages/KitchenView';
 import WaiterView from './pages/WaiterView';
 
-const RESTAURANT_ID = import.meta.env.VITE_RESTAURANT_ID || '6a69c016061902ab10237c49';
+const RESTAURANT_ID = import.meta.env.VITE_RESTAURANT_ID || '6a6a35e3dfa24d3dbae1eb9c';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -41,7 +41,10 @@ export default function App() {
       .catch((err) => console.error('Error cargando pedidos:', err));
 
     socket.connect();
-    socket.on('connect', () => setConnected(true));
+    socket.on('connect', () => {
+      setConnected(true);
+      socket.emit('join:restaurant', restaurantId);
+    });
     socket.on('disconnect', () => setConnected(false));
     socket.on('order:new', (order) => setOrders((prev) => [order, ...prev]));
     socket.on('order:updated', (order) =>
@@ -50,9 +53,6 @@ export default function App() {
     socket.on('table:updated', (table) =>
       setTables((prev) => prev.map((t) => (t._id === table._id ? table : t)))
     );
-    socket.on('connect', () => {
-      socket.emit('join:restaurant', restaurantId);
-    });
 
     return () => {
       socket.off('connect');

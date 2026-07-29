@@ -1,17 +1,11 @@
 import socket from '../socket/client';
+import { ORDER_ITEM_STATUSES } from '../constants/statuses';
 
 export default function KitchenView({ orders }) {
   const pendingOrders = orders.filter((o) => {
     if (o.status !== 'open' && o.status !== 'in_progress') return false;
     return o.items.some((item) => item.status !== 'served');
   });
-
-  const STATUS_LABELS = {
-    pending: 'Pendiente',
-    preparing: 'Preparando',
-    ready: 'Listo',
-    served: 'Servido',
-  };
 
   const updateItemStatus = (orderId, itemId, currentStatus) => {
     const next = currentStatus === 'pending'
@@ -22,10 +16,10 @@ export default function KitchenView({ orders }) {
     socket.emit('order:updateItem', { orderId, itemId, status: next });
   };
 
-  const getNextStatus = (currentStatus) => {
-    if (currentStatus === 'pending') return 'preparing';
-    if (currentStatus === 'preparing') return 'ready';
-    return 'served';
+  const getNextStatusLabel = (currentStatus) => {
+    if (currentStatus === 'pending') return ORDER_ITEM_STATUSES.preparing;
+    if (currentStatus === 'preparing') return ORDER_ITEM_STATUSES.ready;
+    return ORDER_ITEM_STATUSES.served;
   };
 
   if (pendingOrders.length === 0) {
@@ -74,12 +68,12 @@ export default function KitchenView({ orders }) {
                         updateItemStatus(order._id, item._id, item.status);
                       }
                     }}
-                    aria-label={`${item.quantity}x ${item.name}, estado: ${STATUS_LABELS[item.status]}. Clic para avanzar a ${STATUS_LABELS[getNextStatus(item.status)]}`}
+                    aria-label={`${item.quantity}x ${item.name}, estado: ${ORDER_ITEM_STATUSES[item.status]}. Clic para avanzar a ${getNextStatusLabel(item.status)}`}
                   >
                     <span className="item-qty">{item.quantity}x</span>
                     <span className="item-name">{item.name}</span>
                     {item.notes && <span className="item-notes">{item.notes}</span>}
-                    <span className="item-status">{STATUS_LABELS[item.status] || item.status}</span>
+                    <span className="item-status">{ORDER_ITEM_STATUSES[item.status] || item.status}</span>
                   </li>
                 ))}
             </ul>

@@ -18,10 +18,9 @@ const orderItemSchema = z.object({
 
 const createOrderSchema = z.object({
   restaurant: z.string().min(1),
-  table: z.string().min(1).optional(),
+  table: z.string().min(1),
   tableNumber: z.number().int().min(1),
   items: z.array(orderItemSchema).min(1).max(50),
-  waiter: z.string().max(100).optional(),
   notes: z.string().max(500).optional(),
 });
 

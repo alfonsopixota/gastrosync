@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ORDER_ITEM_STATUSES, TABLE_STATUSES } from '../constants/statuses';
 
 export default function WaiterView({ menu, tables, orders, onCreateOrder }) {
   const [selectedTable, setSelectedTable] = useState(null);
@@ -40,13 +41,6 @@ export default function WaiterView({ menu, tables, orders, onCreateOrder }) {
     return o.items.some((item) => item.status !== 'served');
   });
 
-  const STATUS_LABELS = {
-    pending: 'Pendiente',
-    preparing: 'Preparando',
-    ready: 'Listo',
-    served: 'Servido',
-  };
-
   return (
     <div className="waiter-view">
       <section className="tables-section" aria-label="Selección de mesa">
@@ -57,13 +51,13 @@ export default function WaiterView({ menu, tables, orders, onCreateOrder }) {
               key={table._id}
               className={`table-card ${table.status} ${selectedTable === table.number ? 'selected' : ''}`}
               onClick={() => setSelectedTable(table.number)}
-              aria-label={`Mesa ${table.number}, ${table.capacity} personas, ${table.status === 'free' ? 'libre' : table.status === 'occupied' ? 'ocupada' : 'reservada'}`}
+              aria-label={`Mesa ${table.number}, ${table.capacity} personas, ${TABLE_STATUSES[table.status]}`}
               aria-pressed={selectedTable === table.number}
             >
               <span className="table-number">{table.number}</span>
               <span className="table-capacity">{table.capacity} pers.</span>
               <span className={`table-status ${table.status}`}>
-                {table.status === 'free' ? 'Libre' : table.status === 'occupied' ? 'Ocupada' : 'Reservada'}
+                {TABLE_STATUSES[table.status]}
               </span>
             </button>
           ))}
@@ -150,7 +144,7 @@ export default function WaiterView({ menu, tables, orders, onCreateOrder }) {
                   {order.items.map((item) => (
                     <li key={item._id} className={`item-status-${item.status}`}>
                       {item.name} x{item.quantity} —{' '}
-                      <span className="status-badge">{STATUS_LABELS[item.status] || item.status}</span>
+                      <span className="status-badge">{ORDER_ITEM_STATUSES[item.status] || item.status}</span>
                     </li>
                   ))}
                 </ul>

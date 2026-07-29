@@ -1,12 +1,20 @@
 const { Router } = require('express');
 const Table = require('../models/Table');
 const { tableStatusSchema } = require('../validation/schemas');
+const { authenticate, authorize } = require('../middleware/auth');
+const validateObjectId = require('../middleware/validateObjectId');
 const { sanitizeError } = require('../utils/errors');
 
 const router = Router();
 
-router.get('/restaurant/:restaurantId', async (req, res) => {
+router.use(authenticate);
+
+router.get('/restaurant/:restaurantId', validateObjectId('restaurantId'), authorize('admin', 'waiter', 'kitchen'), async (req, res) => {
   try {
+    if (req.user.restaurant !== req.params.restaurantId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'No tienes acceso a este restaurante' });
+    }
+
     const tables = await Table.find({ restaurant: req.params.restaurantId }).sort('number');
     res.json(tables);
   } catch (err) {
@@ -14,7 +22,7 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
   }
 });
 
-router.put('/:tableId/status', async (req, res) => {
+router.put('/:tableId/status', validateObjectId('tableId'), authorize('admin', 'waiter'), async (req, res) => {
   try {
     const parsed = tableStatusSchema.parse({
       tableId: req.params.tableId,
@@ -27,6 +35,9 @@ router.put('/:tableId/status', async (req, res) => {
     );
     if (!table) {
       return res.status(404).json({ error: 'Mesa no encontrada' });
+    }
+    if (req.user.restaurant !== table.restaurant.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'No tienes acceso a esta mesa' });
     }
     res.json(table);
   } catch (err) {

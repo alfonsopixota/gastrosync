@@ -1,26 +1,26 @@
 const express = require('express');
-const { z } = require('zod');
 const MenuItem = require('../models/MenuItem');
+const { authenticate, authorize } = require('../middleware/auth');
+const validateObjectId = require('../middleware/validateObjectId');
+const { sanitizeError } = require('../utils/errors');
 
 const router = express.Router();
 
-const restaurantIdSchema = z.object({
-  restaurantId: z.string().min(1),
-});
+router.use(authenticate);
 
-router.get('/restaurant/:restaurantId', async (req, res) => {
+router.get('/restaurant/:restaurantId', validateObjectId('restaurantId'), authorize('admin', 'waiter', 'kitchen'), async (req, res) => {
   try {
-    const parsed = restaurantIdSchema.parse(req.params);
+    if (req.user.restaurant !== req.params.restaurantId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'No tienes acceso a este restaurante' });
+    }
+
     const items = await MenuItem.find({
-      restaurant: parsed.restaurantId,
+      restaurant: req.params.restaurantId,
       available: true,
     });
     res.json(items);
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Datos inválidos', errors: err.issues });
-    }
-    res.status(500).json({ error: 'Error al obtener el menú' });
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 

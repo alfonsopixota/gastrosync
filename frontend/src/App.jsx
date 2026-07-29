@@ -1,44 +1,36 @@
 import { useState, useEffect } from 'react';
 import socket from './socket/client';
-import { authFetch, API_URL, isAuthenticated, logout } from './services/api';
+import { authFetch, isAuthenticated, logout } from './services/api';
+import useInitialData from './hooks/useInitialData';
+import Header from './components/Header';
+import Spinner from './components/Spinner';
+import ErrorMessage from './components/ErrorMessage';
 import LoginView from './pages/LoginView';
 import KitchenView from './pages/KitchenView';
 import WaiterView from './pages/WaiterView';
 
-const RESTAURANT_ID = import.meta.env.VITE_RESTAURANT_ID || '6a6a35e3dfa24d3dbae1eb9c';
-
 export default function App() {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState('waiter');
-  const [orders, setOrders] = useState([]);
-  const [menu, setMenu] = useState([]);
-  const [tables, setTables] = useState([]);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated()) {
       authFetch(`/api/auth/me`)
         .then(setUser)
-        .catch(() => logout());
+        .catch(() => logout())
+        .finally(() => setAuthLoading(false));
+    } else {
+      setAuthLoading(false);
     }
   }, []);
 
+  const { menu, tables, setTables, orders, setOrders, loading, error, refetch } = useInitialData(user);
+
   useEffect(() => {
     if (!user) return;
-
-    const restaurantId = user.restaurant || RESTAURANT_ID;
-
-    authFetch(`/api/menu/restaurant/${restaurantId}`)
-      .then(setMenu)
-      .catch((err) => console.error('Error cargando menú:', err));
-
-    authFetch(`/api/tables/restaurant/${restaurantId}`)
-      .then(setTables)
-      .catch((err) => console.error('Error cargando mesas:', err));
-
-    authFetch(`/api/orders/restaurant/${restaurantId}`)
-      .then(setOrders)
-      .catch((err) => console.error('Error cargando pedidos:', err));
+    const restaurantId = user.restaurant;
 
     socket.connect();
     socket.on('connect', () => {
@@ -69,21 +61,26 @@ export default function App() {
     logout();
     setUser(null);
     setOrders([]);
-    setMenu([]);
     setTables([]);
   };
+
+  if (authLoading) {
+    return (
+      <div className="app-loading">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   if (!user) {
     return <LoginView onLogin={setUser} />;
   }
 
-  const restaurantId = user.restaurant || RESTAURANT_ID;
-
   const createOrder = (tableNumber, items) => {
     const table = tables.find((t) => t.number === tableNumber);
     if (!table) return;
     socket.emit('order:create', {
-      restaurant: restaurantId,
+      restaurant: user.restaurant,
       table: table._id,
       tableNumber,
       items: items.map((item) => ({
@@ -96,44 +93,13 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header" role="banner">
-        <h1><span>Gastro</span>Sync</h1>
-        <nav role="tablist" aria-label="Vistas">
-          {(user.role === 'admin' || user.role === 'waiter') && (
-            <button
-              role="tab"
-              aria-selected={view === 'waiter'}
-              onClick={() => setView('waiter')}
-              className={view === 'waiter' ? 'active' : ''}
-            >
-              Camarero
-            </button>
-          )}
-          {(user.role === 'admin' || user.role === 'kitchen') && (
-            <button
-              role="tab"
-              aria-selected={view === 'kitchen'}
-              onClick={() => setView('kitchen')}
-              className={view === 'kitchen' ? 'active' : ''}
-            >
-              Cocina
-            </button>
-          )}
-        </nav>
-        <div className="header-right">
-          <span
-            className={`status ${connected ? 'connected' : 'disconnected'}`}
-            role="status"
-            aria-live="polite"
-          >
-            {connected ? 'En vivo' : 'Desconectado'}
-          </span>
-          <span className="user-info">{user.name} ({user.role})</span>
-          <button className="btn-logout" onClick={handleLogout}>Salir</button>
-        </div>
-      </header>
+      <Header user={user} view={view} setView={setView} connected={connected} onLogout={handleLogout} />
       <main role="main">
-        {view === 'waiter' && (user.role === 'admin' || user.role === 'waiter') ? (
+        {loading ? (
+          <Spinner />
+        ) : error ? (
+          <ErrorMessage message={error} onRetry={refetch} />
+        ) : view === 'waiter' && (user.role === 'admin' || user.role === 'waiter') ? (
           <WaiterView menu={menu} tables={tables} orders={orders} onCreateOrder={createOrder} />
         ) : (
           <KitchenView orders={orders} />

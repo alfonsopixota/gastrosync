@@ -1,5 +1,7 @@
+const config = require('../config');
+
 const sanitizeError = (err) => {
-  if (process.env.NODE_ENV === 'production') {
+  if (config.isProduction) {
     return 'Error interno del servidor';
   }
   return err.message || 'Error desconocido';

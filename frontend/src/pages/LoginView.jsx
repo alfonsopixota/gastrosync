@@ -36,9 +36,9 @@ export default function LoginView({ onLogin }) {
         <h1><span>Gastro</span>Sync</h1>
         <p className="login-subtitle">{isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</p>
 
-        {error && <p className="login-error" role="alert">{error}</p>}
+        {error && <p className="login-error" role="alert" aria-live="assertive">{error}</p>}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} aria-label={isRegister ? 'Formulario de registro' : 'Formulario de login'}>
           {isRegister && (
             <div className="login-field">
               <label htmlFor="name">Nombre</label>
@@ -48,6 +48,7 @@ export default function LoginView({ onLogin }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                autoComplete="name"
               />
             </div>
           )}
@@ -59,6 +60,7 @@ export default function LoginView({ onLogin }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
           <div className="login-field">
@@ -71,22 +73,24 @@ export default function LoginView({ onLogin }) {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                tabIndex={0}
               >
                 {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
                     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
                     <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
                     <line x1="1" y1="1" x2="23" y2="23" />
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                     <circle cx="12" cy="12" r="3" />
                   </svg>
@@ -104,7 +108,7 @@ export default function LoginView({ onLogin }) {
               </select>
             </div>
           )}
-          <button type="submit" className="btn-primary" disabled={loading}>
+          <button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
             {loading ? 'Procesando...' : isRegister ? 'Registrarse' : 'Entrar'}
           </button>
         </form>
@@ -112,6 +116,7 @@ export default function LoginView({ onLogin }) {
         <button
           className="login-toggle"
           onClick={() => { setIsRegister(!isRegister); setError(''); }}
+          aria-label={isRegister ? 'Cambiar a formulario de login' : 'Cambiar a formulario de registro'}
         >
           {isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
         </button>

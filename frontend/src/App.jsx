@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import socket from './socket/client';
 import { authFetch, isAuthenticated, logout } from './services/api';
 import useInitialData from './hooks/useInitialData';
+import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import ErrorMessage from './components/ErrorMessage';
 import LoginView from './pages/LoginView';
-import KitchenView from './pages/KitchenView';
-import WaiterView from './pages/WaiterView';
 
-export default function App() {
+const WaiterView = lazy(() => import('./pages/WaiterView'));
+const KitchenView = lazy(() => import('./pages/KitchenView'));
+
+function AppContent() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState('waiter');
@@ -93,18 +95,29 @@ export default function App() {
 
   return (
     <div className="app">
+      <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
       <Header user={user} view={view} setView={setView} connected={connected} onLogout={handleLogout} />
-      <main role="main">
-        {loading ? (
-          <Spinner />
-        ) : error ? (
-          <ErrorMessage message={error} onRetry={refetch} />
-        ) : view === 'waiter' && (user.role === 'admin' || user.role === 'waiter') ? (
-          <WaiterView menu={menu} tables={tables} orders={orders} onCreateOrder={createOrder} />
-        ) : (
-          <KitchenView orders={orders} />
-        )}
+      <main id="main-content" role="main">
+        <Suspense fallback={<Spinner />}>
+          {loading ? (
+            <Spinner />
+          ) : error ? (
+            <ErrorMessage message={error} onRetry={refetch} />
+          ) : view === 'waiter' && (user.role === 'admin' || user.role === 'waiter') ? (
+            <WaiterView menu={menu} tables={tables} orders={orders} onCreateOrder={createOrder} />
+          ) : (
+            <KitchenView orders={orders} />
+          )}
+        </Suspense>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }
